@@ -14,11 +14,9 @@ echo "$header"
 # TODO: Set error handler that will spawn
 #       troubleshooting shell
 
-# dmesg -n 1
+dmesg -n 1
 
 mount_pseudo_filesystems() {
-	return # TODO: Remove
-	
 	mkdir -p /dev /proc /sys
 	mount -t devtmpfs none /dev
 	mkdir -p /dev/pts
