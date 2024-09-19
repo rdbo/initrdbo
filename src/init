@@ -57,6 +57,47 @@ probe_kernel_modules() {
 	for module in $(cat /etc/modules); do
 		modprobe "$module"
 	done
+
+	if [ ! -z "$_rootfstype" ]; then
+		modprobe "$rootfstype"
+	fi
+
+	# squashfs, loopback and overlayfs are
+	# required for the live setup
+	if [ ! -z "$_rd_live" ]; then
+		modprobe squashfs
+		modprobe loop
+		modprobe overlay
+	fi
+}
+
+mount_rootfs() {
+	for i in $(seq 1 10); do
+		local rootdev="$(findfs "$_root" | head -n 1)"
+		if [ ! -z "$rootdev" ] && [ -b "$rootdev" ]; then
+			break
+		fi
+
+		sleep 1
+	done
+
+	if [ -z "$rootdev" ]; then
+		return 1
+	fi
+
+	mkdir -p /new_root
+
+	if blkid "$rootdev" | grep 'TYPE="crypto_LUKS"' > /dev/null; then
+		mkdir -p /run
+		cryptsetup luksOpen "$rootdev" cryptroot
+		if [ ! -b /dev/mapper/cryptroot ]; then
+			return 2
+		fi
+
+		mount -t "$_rootfstype" /dev/mapper/cryptsigma /new_root
+	else
+		mount -t "$_rootfstype" "$rootdev" /new_root
+	fi
 }
 
 echo "[*] Mounting pseudo filesystems..."
@@ -74,5 +115,18 @@ fi
 echo "[*] Probing kernel modules..."
 probe_kernel_modules
 
-echo "ROOT: $_root"
-echo "RD.LIVE: $_rd_live"
+if [ -z "$_root" ]; then
+	echo "[!] Missing 'root' option in kernel command line, spawning troubleshoot shell..."
+	exec /bin/sh
+fi
+
+if [ -z "$_rootfstype" ]; then
+	echo "[!] Missing 'rootfstype' option in kernel command line, spawning troubleshoot shell..."
+	exec /bin/sh
+fi
+
+echo "[*] Mounting rootfs..."
+if ! mount_rootfs; then
+	echo "[!] Failed to mount the rootfs, spawning troubleshoot shell..."
+	exec /bin/sh
+fi
