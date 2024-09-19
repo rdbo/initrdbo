@@ -65,13 +65,14 @@ mount_pseudo_filesystems
 echo "[*] Parsing kernel cmdline options..."
 parse_kernel_cmdline_options
 
-echo "[*] Probing kernel modules..."
-probe_kernel_modules
-
 # Run custom init if "init=" option is set
 if [ ! -z "$_init" ]; then
+	echo "[*] Running custom init command: $_init"
 	exec $_init
 fi
+
+echo "[*] Probing kernel modules..."
+probe_kernel_modules
 
 echo "ROOT: $_root"
 echo "RD.LIVE: $_rd_live"
