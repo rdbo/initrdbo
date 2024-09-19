@@ -9,6 +9,8 @@ header="
 "
 echo "$header"
 
+# TODO: Check if dependencies are present
+
 # TODO: Set error handler that will spawn
 #       troubleshooting shell
 
@@ -85,7 +87,7 @@ mount_rootfs() {
 		return 1
 	fi
 
-	mkdir -p /new_root
+	mkdir -p /media/root
 
 	if blkid "$rootdev" | grep 'TYPE="crypto_LUKS"' > /dev/null; then
 		mkdir -p /run
@@ -94,10 +96,40 @@ mount_rootfs() {
 			return 2
 		fi
 
-		mount -t "$_rootfstype" /dev/mapper/cryptsigma /new_root
+		mount -t "$_rootfstype" /dev/mapper/cryptsigma /media/root
 	else
-		mount -t "$_rootfstype" "$rootdev" /new_root
+		mount -t "$_rootfstype" "$rootdev" /media/root
 	fi
+}
+
+setup_liveboot() {
+	mkdir -p /live
+	mount -t squashfs "/media/root/${_rd_live}" /live
+
+	mkdir -p /upper /work /new_root
+	mount -t overlay overlay -o lowerdir=/live,upperdir=/upper,workdir=/work /new_root
+
+	mkdir -p /new_root/media/root
+	mount -r -R /media/root /new_root/media/root
+
+	mkdir -p /new_root/live
+	mount -r /new_root/cdrom/rootfs.squashfs /new_root/live
+}
+
+setup_new_root() {
+	# If the new root directory doesn't exist yet,
+	# it will be the same as the root partition
+	if [ ! -e /new_root ]; then
+		mkdir -p /new_root
+		mount -r -R /media/root /new_root
+	fi
+
+	mkdir -p /new_root/dev /new_root/proc /new_root/sys
+	mount -t devtmpfs none /new_root/dev
+	mount -t proc none /new_root/proc
+	mount -t sysfs none /new_root/sys
+
+	exec switch_root /new_root
 }
 
 echo "[*] Mounting pseudo filesystems..."
@@ -130,3 +162,28 @@ if ! mount_rootfs; then
 	echo "[!] Failed to mount the rootfs, spawning troubleshoot shell..."
 	exec /bin/sh
 fi
+
+# Run custom init if "rd.init=" option is set
+# (relative to /media/root)
+if [ ! -z "$_init" ]; then
+	echo "[*] Running custom init command: $_init"
+	exec chroot /media/root $_init
+fi
+
+# Setup liveboot if it is asked
+if [ ! -z "$_rd_live" ]; then
+	echo "[*] Setting up liveboot..."
+
+	if [ ! -f "/media/root/${_rd_live}" ]; then
+		echo "[!] Missing liveboot rootfs, spawning troubleshoot shell..."
+		exec /bin/sh
+	fi
+	
+	setup_liveboot
+fi
+
+echo "[*] Setting up new root..."
+setup_new_root
+
+echo "[*] Switching to new root..."
+exec switch_root /new_root
