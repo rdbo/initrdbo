@@ -1,0 +1,63 @@
+#!/bin/sh
+
+header="
+  _      _ _          _ _         
+ (_)_ _ (_) |_ _ _ __| | |__  ___ 
+ | | ' \| |  _| '_/ _\` | '_ \/ _ \\
+ |_|_||_|_|\__|_| \__,_|_.__/\___/
+                                  
+"
+echo "$header"
+
+# dmesg -n 1
+
+mount_pseudo_filesystems() {
+	mkdir -p /dev /proc /sys
+	mount -t devtmpfs none /dev
+	mkdir -p /dev/pts
+	mount -t devpts none /dev/pts
+	mount -t proc none /proc
+	mount -t sysfs none /sys
+}
+
+set_variable_if_expected() {
+	local option="$1"
+	local expected_vars="init root rootfstype rd.init rd.live"
+	for expected_var in $expected_vars; do
+		var_name="$(printf "$expected_var" | tr '.' '_')"
+		
+		case "$option" in
+		$expected_var=*)
+			eval "_${var_name}"='${option#*=}'
+			;;
+		$expected_var)
+			eval "_${var_name}"=yes
+			;;
+		*)
+			continue
+			;;
+		esac
+
+		break
+	done
+}
+
+parse_kernel_cmdline_options() {
+	for option in $(cat /proc/cmdline | xargs -n1); do
+		set_variable_if_expected "$option"
+	done
+}
+
+echo "[*] Mounting pseudo filesystems..."
+# mount_pseudo_filesystems
+
+echo "[*] Parsing kernel cmdline options..."
+parse_kernel_cmdline_options
+
+# Run custom init if "init=" option is set
+if [ ! -z "$_init" ]; then
+	exec $_init
+fi
+
+echo "ROOT: $_root"
+echo "RD.LIVE: $_rd_live"
