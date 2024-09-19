@@ -9,9 +9,14 @@ header="
 "
 echo "$header"
 
+# TODO: Set error handler that will spawn
+#       troubleshooting shell
+
 # dmesg -n 1
 
 mount_pseudo_filesystems() {
+	return # TODO: Remove
+	
 	mkdir -p /dev /proc /sys
 	mount -t devtmpfs none /dev
 	mkdir -p /dev/pts
@@ -48,11 +53,20 @@ parse_kernel_cmdline_options() {
 	done
 }
 
+probe_kernel_modules() {
+	for module in $(cat /etc/modules); do
+		modprobe "$module"
+	done
+}
+
 echo "[*] Mounting pseudo filesystems..."
-# mount_pseudo_filesystems
+mount_pseudo_filesystems
 
 echo "[*] Parsing kernel cmdline options..."
 parse_kernel_cmdline_options
+
+echo "[*] Probing kernel modules..."
+probe_kernel_modules
 
 # Run custom init if "init=" option is set
 if [ ! -z "$_init" ]; then
