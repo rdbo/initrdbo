@@ -43,7 +43,7 @@ parse_args() {
 	local prev=""
 	for arg in $@; do
 		case "$arg" in
-		-h) usage;;
+		-h|--help) usage;;
 		-k|-c) prev="$arg";;
 		*)
 			case "$prev" in
