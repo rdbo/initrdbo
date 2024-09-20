@@ -96,7 +96,7 @@ mount_rootfs() {
 
 	if blkid "$rootdev" | grep 'TYPE="crypto_LUKS"' > /dev/null; then
 		mkdir -p /run
-		modprobe -a dm-mod dm-crypt
+		modprobe -a dm-mod dm-crypt crc32c
 		cryptsetup luksOpen "$rootdev" cryptroot
 		if [ ! -b /dev/mapper/cryptroot ]; then
 			return 2
