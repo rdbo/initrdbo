@@ -183,6 +183,6 @@ echo "[*] Compressing files into initramfs..."
 compress_initramfs "$tmpdir" "$(realpath $INITRAMFS_OUT)"
 
 echo "[*] Cleaning up..."
-# rm -rf "$tmpdir"
+rm -rf "$tmpdir"
 
 echo "[*] Successfully generated initramfs!"
