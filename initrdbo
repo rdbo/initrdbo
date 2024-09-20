@@ -113,6 +113,10 @@ copy_kernel_modules() {
 			cp -r "$root_dir/lib/modules/$kernel_release/"$file "$initrd_dir/lib/modules/$kernel_release/$directory/"
 		done
 	done
+
+	# Copy files required for modprobe to work
+	mkdir -p "$initrd_dir/lib/modules/$kernel_release"
+	cp "$root_dir/lib/modules/$kernel_release/modules."* "$initrd_dir/lib/modules/$kernel_release/"
 }
 
 copy_files() {
