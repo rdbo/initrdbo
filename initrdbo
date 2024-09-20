@@ -160,14 +160,19 @@ for file in $(ls "$CONFIG_DIR" | grep '.files$'); do
 done
 
 # From here on, errors are forbidden
+# TODO: Better error handling
 set -e
 
 cp "$CONFIG_DIR/init" "$tmpdir/"
+
+echo "[*] Setting up busybox..."
+mkdir -p "$tmpdir/bin"
+/bin/busybox --install -s "$tmpdir/bin"
 
 echo "[*] Compressing files into initramfs..."
 compress_initramfs "$tmpdir" "$(realpath $INITRAMFS_OUT)"
 
 echo "[*] Cleaning up..."
-rm -rf "$tmpdir"
+# rm -rf "$tmpdir"
 
 echo "[*] Successfully generated initramfs!"
