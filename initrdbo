@@ -159,6 +159,9 @@ for file in $(ls "$CONFIG_DIR" | grep '.files$'); do
 	copy_files "$tmpdir" "$ROOT_DIR" "$CONFIG_DIR/$file"
 done
 
+# From here on, errors are forbidden
+set -e
+
 cp "$CONFIG_DIR/init" "$tmpdir/"
 
 echo "[*] Compressing files into initramfs..."
