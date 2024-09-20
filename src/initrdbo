@@ -1,0 +1,112 @@
+#!/bin/sh
+
+header="
+  _      _ _          _ _         
+ (_)_ _ (_) |_ _ _ __| | |__  ___ 
+ | | ' \| |  _| '_/ _\` | '_ \/ _ \\
+ |_|_||_|_|\__|_| \__,_|_.__/\___/
+                                  
+"
+echo "$header"
+
+KERNEL_RELEASE="$(uname -r)"
+CONFIG_DIR="/etc/initrdbo"
+INITRAMFS_OUT="/boot/initramfs-$KERNEL_RELEASE"
+
+help="
+usage: initrdbo [[ARGS]] [INITRAMFS_OUT]
+
+OPTIONS:
+	-h               Shows the program usage
+	-k [RELEASE]     Sets the kernel release
+	                 (Current: $KERNEL_RELEASE)
+	-c               Sets the config directory
+                         (Current: $CONFIG_DIR)
+
+	[INITRAMFS_OUT]: Output file of the initramfs
+	                 (Current: $INITRAMFS_OUT)
+"
+
+usage() {
+	echo "$help"
+	exit 1
+}
+
+parse_args() {
+	INITRAMFS_OUT=""
+	
+	local prev=""
+	for arg in $@; do
+		case "$arg" in
+		-h) usage;;
+		-k|-c) prev="$arg";;
+		*)
+			case "$prev" in
+				-k) KERNEL_RELEASE="$arg";;
+				-c) CONFIG_DIR="$arg";;
+				*) INITRAMFS_OUT="$arg";;
+			esac
+			prev=""
+			;;
+		esac
+	done
+
+	# Regenerate the INITRAMFS_OUT default parameter
+	# because the KERNEL_RELEASE might have changed
+	if [ -z "$INITRAMFS_OUT" ]; then
+		INITRAMFS_OUT="/boot/initramfs-$KERNEL_RELEASE"
+	fi
+}
+
+copy_kernel_modules() {
+	local initrd_dir="$1"
+	local modules_file="$2"
+	local root_dir="$3"
+	local kernel_release="$4"
+	
+	# Copy Linux kernel modules by file match
+	local kmods=$(cat "$modules_file" | grep ^kernel/ | tr '\n' ' ' | xargs -0 printf "%s\n")
+	for match in $kmods; do
+		files="$(find "$root_dir/lib/modules/$kernel_release/"$match)"
+		for file in $files; do
+			file="$(printf "$file" | sed "s|.*/lib/modules/$kernel_release/||")"
+			directory=$(printf $file | awk -F '/' '{ $NF=""; print $0 }' | tr ' ' '/')
+
+			mkdir -p "$initrd_dir/lib/modules/$kernel_release/$directory"
+			cp -r "$root_dir/lib/modules/$kernel_release/"$file "$initrd_dir/lib/modules/$kernel_release/$directory/"
+		done
+	done
+
+	# Copy Linux kernel modules by module name
+	local kmods=$(cat "$modules_file" | grep -v ^kernel | sed 's/#.*//g' | tr '\n' ' ' | sed -E 's/\s+/ /g' | sed -E 's/^\s+//')
+	for match in $kmods; do
+		# requires 'kmod' package
+		files=$(chroot "$root_dir" modprobe -S "$kernel_release" -D "$match" | tr '\n' ',')
+		files=$(printf "$files" | tr ',' '\n' | grep '^insmod' | sed -E 's/^insmod\s+//')
+		for file in $files; do
+			file="$(printf "$file" | sed "s|.*/lib/modules/$kernel_release/||")"
+			directory=$(printf $file | awk -F '/' '{ $NF=""; print $0 }' | tr ' ' '/')
+
+			mkdir -p "$initrd_dir/lib/modules/$kernel_release/$directory"
+			cp -r "$root_dir/lib/modules/$kernel_release/"$file "$initrd_dir/lib/modules/$kernel_release/$directory/"
+		done
+	done
+}
+
+parse_args $@
+
+echo "KERNEL_RELEASE=$KERNEL_RELEASE"
+echo "CONFIG_DIR=$CONFIG_DIR"
+echo "INITRAMFS_OUT=$INITRAMFS_OUT"
+echo
+
+echo "[*] Creating temporary directory for initrd..."
+
+tmpdir="$(mktemp -d)"
+
+echo "[*] Copying kernel modules to initrd dir..."
+# copy_kernel_modules "$tmpdir" "/etc/modules" "/" "$(uname -r)"
+
+echo "[*] Copying required files to initrd dir..."
+
+rm -rf "$tmpdir"
