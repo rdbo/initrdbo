@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Required programs: awk tr lddtree
+
 header="
   _      _ _          _ _         
  (_)_ _ (_) |_ _ _ __| | |__  ___ 
@@ -78,10 +80,10 @@ copy_kernel_modules() {
 	# Copy Linux kernel modules by file match
 	local kmods=$(cat "$modules_file" | grep ^kernel/ | tr '\n' ' ' | xargs -0 printf "%s\n")
 	for match in $kmods; do
-		files="$(find "$root_dir/lib/modules/$kernel_release/"$match)"
+		local files="$(find "$root_dir/lib/modules/$kernel_release/"$match)"
 		for file in $files; do
-			file="$(printf "$file" | sed "s|.*/lib/modules/$kernel_release/||")"
-			directory=$(printf $file | awk -F '/' '{ $NF=""; print $0 }' | tr ' ' '/')
+			local file="$(printf "$file" | sed "s|.*/lib/modules/$kernel_release/||")"
+			local directory=$(printf $file | awk -F '/' '{ $NF=""; print $0 }' | tr ' ' '/')
 
 			mkdir -p "$initrd_dir/lib/modules/$kernel_release/$directory"
 			cp -r "$root_dir/lib/modules/$kernel_release/"$file "$initrd_dir/lib/modules/$kernel_release/$directory/"
@@ -92,15 +94,34 @@ copy_kernel_modules() {
 	local kmods=$(cat "$modules_file" | grep -v ^kernel | sed 's/#.*//g' | tr '\n' ' ' | sed -E 's/\s+/ /g' | sed -E 's/^\s+//')
 	for match in $kmods; do
 		# requires 'kmod' package
-		files=$(chroot_if_differs "$root_dir" modprobe -S "$kernel_release" -D "$match" | tr '\n' ',')
-		files=$(printf "$files" | tr ',' '\n' | grep '^insmod' | sed -E 's/^insmod\s+//')
+		local files=$(chroot_if_differs "$root_dir" modprobe -S "$kernel_release" -D "$match" | tr '\n' ',')
+		local files=$(printf "$files" | tr ',' '\n' | grep '^insmod' | sed -E 's/^insmod\s+//')
 		for file in $files; do
-			file="$(printf "$file" | sed "s|.*/lib/modules/$kernel_release/||")"
-			directory=$(printf $file | awk -F '/' '{ $NF=""; print $0 }' | tr ' ' '/')
+			local file="$(printf "$file" | sed "s|.*/lib/modules/$kernel_release/||")"
+			local directory="$(printf $file | awk -F '/' '{ $NF=""; print $0 }' | tr ' ' '/')"
 
 			mkdir -p "$initrd_dir/lib/modules/$kernel_release/$directory"
 			cp -r "$root_dir/lib/modules/$kernel_release/"$file "$initrd_dir/lib/modules/$kernel_release/$directory/"
 		done
+	done
+}
+
+copy_files() {
+	local initrd_dir="$1"
+	local root_dir="$2"
+	local files="$(cat "$3" | sed 's/#.*//g')"
+
+	for file in $(lddtree -R "$root_dir" -l $files); do
+		if [ -d "$root_dir/$file" ]; then
+			mkdir -p "$initrd_dir/$file"
+			cp -r "$root_dir/$file/." "$initrd_dir/$file/."
+		else
+			local directory="$(printf $file | awk -F '/' '{ $NF=""; print $0 }' | tr ' ' '/')"
+			local file="$(printf "$file" | sed "s|.*/||g")"
+
+			mkdir -p "$initrd_dir/$directory"
+			cp -r "$root_dir/$directory/$file" "$initrd_dir/$directory/$file"
+		fi
 	done
 }
 
@@ -123,6 +144,12 @@ for file in $(ls "$CONFIG_DIR" | grep '.modules$'); do
 done
 
 echo "[*] Copying required files to initrd dir..."
+for file in $(ls "$CONFIG_DIR" | grep '.files$'); do
+	copy_files "$tmpdir" "$ROOT_DIR" "$CONFIG_DIR/$file"
+done
+
+# echo "[*] Compressing files into initramfs..."
+
 
 echo "[*] Cleaning up..."
 rm -rf "$tmpdir"
