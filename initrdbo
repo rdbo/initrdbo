@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Required programs: awk tr lddtree cpio gzip
+# Required programs: awk tr lddtree cpio xz
 
 header="
   _      _ _          _ _         
@@ -144,7 +144,7 @@ compress_initramfs() {
 	local oldwd="$(pwd)"
 
 	cd "$initrd_dir"
-	find . | cpio -R root:root -H newc -o | gzip > "$output"
+	find . | cpio -R root:root -H newc -o | xz -z > "$output"
 	
 	cd "$oldwd"
 }
