@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Required programs: awk tr lddtree
+# Required programs: awk tr lddtree cpio gzip
 
 header="
   _      _ _          _ _         
@@ -125,6 +125,17 @@ copy_files() {
 	done
 }
 
+compress_initramfs() {
+	local initrd_dir="$1"
+	local output="$2"
+	local oldwd="$(pwd)"
+
+	cd "$initrd_dir"
+	find . | cpio -R root:root -H newc -o | gzip > "$output"
+	
+	cd "$oldwd"
+}
+
 parse_args $@
 
 echo "KERNEL_RELEASE=$KERNEL_RELEASE"
@@ -136,7 +147,6 @@ echo "[*] Creating temporary directory for initrd..."
 
 tmpdir="$(mktemp -d)"
 echo "tmpdir=$tmpdir"
-echo
 
 echo "[*] Copying kernel modules to initrd dir..."
 for file in $(ls "$CONFIG_DIR" | grep '.modules$'); do
@@ -145,11 +155,14 @@ done
 
 echo "[*] Copying required files to initrd dir..."
 for file in $(ls "$CONFIG_DIR" | grep '.files$'); do
+	echo "$file"
 	copy_files "$tmpdir" "$ROOT_DIR" "$CONFIG_DIR/$file"
 done
 
-# echo "[*] Compressing files into initramfs..."
+cp "$CONFIG_DIR/init" "$tmpdir/"
 
+echo "[*] Compressing files into initramfs..."
+compress_initramfs "$tmpdir" "$(realpath $INITRAMFS_OUT)"
 
 echo "[*] Cleaning up..."
 rm -rf "$tmpdir"
