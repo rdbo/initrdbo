@@ -12,3 +12,8 @@ ext4
 dm-mod
 dm-crypt
 dm-raid
+
+# Utils
+kernel/crypto
+kernel/lib
+kernel/security
