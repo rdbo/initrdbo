@@ -16,6 +16,7 @@ CONFIG_DIR="/etc/initrdbo.d"
 ROOT_DIR="/"
 INITRAMFS_OUT="/boot/initramfs-$KERNEL_RELEASE"
 MODULES_FILE="/etc/modules"
+KEEP_TMPDIR="no"
 
 help="
 usage: initrdbo [[ARGS]] [INITRAMFS_OUT]
@@ -24,12 +25,15 @@ OPTIONS:
 	-h               Shows the program usage
 	-k [RELEASE]     Sets the kernel release
 	                 (Current: $KERNEL_RELEASE)
+	-K               Keep temporary directory
+	                 for inspection
+	                 (Default: $KEEP_TMPDIR)
 	-c               Sets the config directory
-                         (Current: $CONFIG_DIR)
+                         (Default: $CONFIG_DIR)
         -r               Sets the root directory
-                         (Current: $ROOT_DIR)
+                         (Default: $ROOT_DIR)
         -m               Sets the modules file
-                         (Current: $MODULES_FILE)
+                         (Default: $MODULES_FILE)
 
 	[INITRAMFS_OUT]: Output file of the initramfs
 	                 (Current: $INITRAMFS_OUT)
@@ -47,6 +51,7 @@ parse_args() {
 	for arg in $@; do
 		case "$arg" in
 		-h|--help) usage;;
+		-K) KEEP_TMPDIR="yes";;
 		-k|-c|-m) prev="$arg";;
 		*)
 			case "$prev" in
@@ -143,8 +148,11 @@ compress_initramfs() {
 parse_args $@
 
 echo "KERNEL_RELEASE=$KERNEL_RELEASE"
+echo "ROOT_DIR=$ROOT_DIR"
 echo "CONFIG_DIR=$CONFIG_DIR"
 echo "INITRAMFS_OUT=$INITRAMFS_OUT"
+echo "MODULES_FILE=$MODULES_FILE"
+echo "KEEP_TMPDIR=$KEEP_TMPDIR"
 echo
 
 echo "[*] Creating temporary directory for initrd..."
@@ -183,6 +191,8 @@ echo "[*] Compressing files into initramfs..."
 compress_initramfs "$tmpdir" "$(realpath $INITRAMFS_OUT)"
 
 echo "[*] Cleaning up..."
-rm -rf "$tmpdir"
+if [ "$KEEP_TMPDIR" = "no" ]; then
+	rm -rf "$tmpdir"
+fi
 
 echo "[*] Successfully generated initramfs!"
