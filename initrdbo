@@ -12,7 +12,7 @@ header="
 echo "$header"
 
 KERNEL_RELEASE="$(uname -r)"
-CONFIG_DIR="/etc/initrdbo"
+CONFIG_DIR="/etc/initrdbo.d"
 ROOT_DIR="/"
 INITRAMFS_OUT="/boot/initramfs-$KERNEL_RELEASE"
 
