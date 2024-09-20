@@ -15,6 +15,7 @@ KERNEL_RELEASE="$(uname -r)"
 CONFIG_DIR="/etc/initrdbo.d"
 ROOT_DIR="/"
 INITRAMFS_OUT="/boot/initramfs-$KERNEL_RELEASE"
+MODULES_FILE="/etc/modules"
 
 help="
 usage: initrdbo [[ARGS]] [INITRAMFS_OUT]
@@ -27,6 +28,8 @@ OPTIONS:
                          (Current: $CONFIG_DIR)
         -r               Sets the root directory
                          (Current: $ROOT_DIR)
+        -m               Sets the modules file
+                         (Current: $MODULES_FILE)
 
 	[INITRAMFS_OUT]: Output file of the initramfs
 	                 (Current: $INITRAMFS_OUT)
@@ -44,11 +47,12 @@ parse_args() {
 	for arg in $@; do
 		case "$arg" in
 		-h|--help) usage;;
-		-k|-c) prev="$arg";;
+		-k|-c|-m) prev="$arg";;
 		*)
 			case "$prev" in
 				-k) KERNEL_RELEASE="$arg";;
 				-c) CONFIG_DIR="$arg";;
+				-m) MODULES_FILE="$arg";;
 				*) INITRAMFS_OUT="$arg";;
 			esac
 			prev=""
@@ -158,6 +162,12 @@ for file in $(ls "$CONFIG_DIR" | grep '.files$'); do
 	echo "$file"
 	copy_files "$tmpdir" "$ROOT_DIR" "$CONFIG_DIR/$file"
 done
+
+if [ -f "$MODULES_FILE" ]; then
+	mkdir -p "$tmpdir/etc"
+	# TODO: Make sure "/etc/modules" is not a directory
+	cp "$MODULES_FILE" "$tmpdir/etc/modules"
+fi
 
 # From here on, errors are forbidden
 # TODO: Better error handling

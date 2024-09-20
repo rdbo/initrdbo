@@ -27,7 +27,7 @@ mount_pseudo_filesystems() {
 
 set_variable_if_expected() {
 	local option="$1"
-	local expected_vars="init root rootfstype rd.init rd.live"
+	local expected_vars="init root rootfstype rd.init rd.live modules"
 	for expected_var in $expected_vars; do
 		var_name="$(printf "$expected_var" | tr '.' '_')"
 		
@@ -54,9 +54,11 @@ parse_kernel_cmdline_options() {
 }
 
 probe_kernel_modules() {
-	for module in $(cat /etc/modules); do
-		modprobe "$module"
-	done
+	if [ -f /etc/modules ]; then
+		for module in $(cat /etc/modules); do
+			modprobe "$module"
+		done
+	fi
 
 	if [ ! -z "$_rootfstype" ]; then
 		modprobe "$rootfstype"
@@ -68,6 +70,11 @@ probe_kernel_modules() {
 		modprobe squashfs
 		modprobe loop
 		modprobe overlay
+	fi
+
+	# modules passed in the kernel command line
+	if [ ! -z "$modules" ]; then
+		modprobe -a "$_modules"
 	fi
 }
 
@@ -89,12 +96,13 @@ mount_rootfs() {
 
 	if blkid "$rootdev" | grep 'TYPE="crypto_LUKS"' > /dev/null; then
 		mkdir -p /run
+		modprobe -a dm-mod dm-crypt
 		cryptsetup luksOpen "$rootdev" cryptroot
 		if [ ! -b /dev/mapper/cryptroot ]; then
 			return 2
 		fi
 
-		mount -t "$_rootfstype" /dev/mapper/cryptsigma /media/root
+		mount -t "$_rootfstype" /dev/mapper/cryptroot /media/root
 	else
 		mount -t "$_rootfstype" "$rootdev" /media/root
 	fi
