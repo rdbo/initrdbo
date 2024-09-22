@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Required programs: awk tr lddtree cpio xz
+# Required programs: awk tr lddtree cpio "$COMPRESSOR"
 
 header="
   _      _ _          _ _         
@@ -17,6 +17,7 @@ ROOT_DIR="/"
 INITRAMFS_OUT="/boot/initramfs-$KERNEL_RELEASE"
 MODULES_FILE="/etc/modules"
 KEEP_TMPDIR="no"
+COMPRESSOR="xz" # The compressor is expanded, so you can pass arguments to it like `xz -z -9`
 
 help="
 usage: initrdbo [[ARGS]] [INITRAMFS_OUT]
@@ -34,6 +35,8 @@ OPTIONS:
                          (Default: $ROOT_DIR)
         -m               Sets the modules file
                          (Default: $MODULES_FILE)
+        -z [COMPRESSOR]  Sets the initramfs compressor
+                         (Default: $COMPRESSOR)
 
 	[INITRAMFS_OUT]: Output file of the initramfs
 	                 (Current: $INITRAMFS_OUT)
@@ -52,12 +55,13 @@ parse_args() {
 		case "$arg" in
 		-h|--help) usage;;
 		-K) KEEP_TMPDIR="yes";;
-		-k|-c|-m) prev="$arg";;
+		-k|-c|-m|-z) prev="$arg";;
 		*)
 			case "$prev" in
 				-k) KERNEL_RELEASE="$arg";;
 				-c) CONFIG_DIR="$arg";;
 				-m) MODULES_FILE="$arg";;
+				-z) COMPRESSOR="$arg";;
 				*) INITRAMFS_OUT="$arg";;
 			esac
 			prev=""
@@ -144,7 +148,7 @@ compress_initramfs() {
 	local oldwd="$(pwd)"
 
 	cd "$initrd_dir"
-	find . | cpio -R root:root -H newc -o | xz -z > "$output"
+	find . | cpio -R root:root -H newc -o | $COMPRESSOR > "$output"
 	
 	cd "$oldwd"
 }
