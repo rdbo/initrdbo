@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Required programs: awk tr lddtree cpio "$COMPRESSOR"
+# Required programs: mount awk tr lddtree cpio "$COMPRESSOR"
 
 header="
   _      _ _          _ _         
