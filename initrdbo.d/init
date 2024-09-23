@@ -61,7 +61,7 @@ probe_kernel_modules() {
 	fi
 
 	if [ ! -z "$_rootfstype" ]; then
-		modprobe "$rootfstype"
+		modprobe "$_rootfstype"
 	fi
 
 	# squashfs, loopback and overlayfs are
