@@ -134,8 +134,6 @@ setup_new_root() {
 	mount -t devtmpfs none /new_root/dev
 	mount -t proc none /new_root/proc
 	mount -t sysfs none /new_root/sys
-
-	exec switch_root /new_root
 }
 
 echo "[*] Mounting pseudo filesystems..."
@@ -192,4 +190,4 @@ echo "[*] Setting up new root..."
 setup_new_root
 
 echo "[*] Switching to new root..."
-exec switch_root /new_root
+exec switch_root /new_root /sbin/init
