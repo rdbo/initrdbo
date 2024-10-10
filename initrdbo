@@ -48,12 +48,18 @@ usage() {
 }
 
 check_programs() {
+	local missing="no"
 	for prog in mount awk tr lddtree cpio "$COMPRESSOR"; do
 		if ! which "$prog" > /dev/null 2>&1; then
-			echo "[!] Missing program '$prog', cannot continue"
-			exit 1
+			echo "[!] Missing program '$prog'"
+			local missing="yes"
 		fi
 	done
+
+	if [ "$missing" = "yes" ]; then
+		echo "[!] Cannot continue"
+		exit 1
+	fi
 }
 
 parse_args() {
