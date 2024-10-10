@@ -88,9 +88,9 @@ parse_args() {
 
 chroot_if_differs() {
 	if [ "$ROOT_DIR" != "/" ]; then
-		chroot $@
+		chroot "$ROOT_DIR" $@
 	else
-		${@:2}
+		$@
 	fi
 }
 
@@ -122,7 +122,7 @@ copy_kernel_modules() {
 	local kmods=$(cat "$modules_file" | grep -v ^kernel | sed 's/#.*//g' | tr '\n' ' ' | sed -E 's/\s+/ /g' | sed -E 's/^\s+//')
 	for match in $kmods; do
 		# requires 'kmod' package
-		local files=$(chroot_if_differs "$root_dir" modprobe -S "$kernel_release" -D "$match" | tr '\n' ',')
+		local files=$(chroot_if_differs modprobe -S "$kernel_release" -D "$match" | tr '\n' ',')
 		local files=$(printf "$files" | tr ',' '\n' | grep '^insmod' | sed -E 's/^insmod\s+//')
 		for file in $files; do
 			local file="$(printf "$file" | sed "s|.*/lib/modules/$kernel_release/||")"
@@ -136,6 +136,22 @@ copy_kernel_modules() {
 	# Copy files required for modprobe to work
 	mkdir -p "$initrd_dir/lib/modules/$kernel_release"
 	cp "$root_dir/lib/modules/$kernel_release/modules."* "$initrd_dir/lib/modules/$kernel_release/"
+}
+
+copy_firmware() {
+	local initrd_dir="$1"
+	local root_dir="$2"
+	local kernel_release="$3"
+
+	mkdir -p "$initrd_dir/lib/firmware"
+	find "$initrd_dir"/lib/modules -type f -name "*.ko*" | chroot_if_differs xargs modinfo -k "$kernel_release" -F firmware | sort -u | while read fw; do
+		for fname in "$fw" "$fw.zst" "$fw.xz"; do
+			if [ -e "${root_dir}/lib/firmware/$fname" ]; then
+				install -pD "${root_dir}/lib/firmware/$fname" "$initrd_dir"/lib/firmware/$fname
+				break
+			fi
+		done
+	done
 }
 
 copy_files() {
@@ -196,6 +212,7 @@ for file in $(ls "$CONFIG_DIR" | grep '.modules$'); do
 done
 
 echo "[*] Copying required firmware to initrd dir..."
+copy_firmware "$tmpdir" "$ROOT_DIR" "$KERNEL_RELEASE"
 
 echo "[*] Copying required files to initrd dir..."
 for file in $(ls "$CONFIG_DIR" | grep '.files$'); do
