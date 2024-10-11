@@ -119,7 +119,7 @@ setup_liveboot() {
 	mount -r -R /media/root /new_root/media/root
 
 	mkdir -p /new_root/live
-	mount -r /new_root/cdrom/rootfs.squashfs /new_root/live
+	mount -r -R /live /new_root/live
 }
 
 setup_new_root() {
