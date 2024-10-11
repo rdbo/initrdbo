@@ -116,7 +116,7 @@ setup_liveboot() {
 	mount -t overlay overlay -o lowerdir=/live,upperdir=/upper,workdir=/work /new_root
 
 	mkdir -p /new_root/media/root
-	mount -r -R /media/root /new_root/media/root
+	mount -r -R /media/root /new_root/cdrom
 
 	mkdir -p /new_root/live
 	mount -r -R /live /new_root/live
