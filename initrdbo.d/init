@@ -110,12 +110,12 @@ mount_rootfs() {
 
 setup_liveboot() {
 	mkdir -p /live
-	mount -t squashfs "/media/root/${_rd_live}" /live
+	mount -t squashfs -o ro "/media/root/${_rd_live}" /live
 
 	mkdir -p /upper /work /new_root
 	mount -t overlay overlay -o lowerdir=/live,upperdir=/upper,workdir=/work /new_root
 
-	mkdir -p /new_root/media/root
+	mkdir -p /new_root/cdrom
 	mount -r -R /media/root /new_root/cdrom
 
 	mkdir -p /new_root/live
