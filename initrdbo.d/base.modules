@@ -18,3 +18,7 @@ kernel/arch
 kernel/crypto
 kernel/lib
 kernel/security
+
+# Alpine Linux's `/etc/modules`
+af_packet
+ipv6
