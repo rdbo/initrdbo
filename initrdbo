@@ -49,7 +49,7 @@ usage() {
 
 check_programs() {
 	local missing="no"
-	for prog in mount awk tr lddtree cpio "$COMPRESSOR"; do
+	for prog in mount awk tr lddtree cpio $(print "%s" "$COMPRESSOR" | cut -d ' ' -f 1); do
 		if ! which "$prog" > /dev/null 2>&1; then
 			echo "[!] Missing program '$prog'"
 			local missing="yes"
