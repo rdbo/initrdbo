@@ -15,7 +15,7 @@ ROOT_DIR="/"
 INITRAMFS_OUT="/boot/initramfs-$KERNEL_RELEASE"
 MODULES_FILE="/etc/modules"
 KEEP_TMPDIR="no"
-COMPRESSOR="xz" # The compressor is expanded, so you can pass arguments to it like `xz -z -9`
+COMPRESSOR="gzip" # The compressor is expanded, so you can pass arguments to it like `xz -z -9`
 SKIP_CHECKS="no"
 
 help="
