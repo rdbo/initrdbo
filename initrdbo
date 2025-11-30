@@ -17,6 +17,7 @@ MODULES_FILE="/etc/modules"
 KEEP_TMPDIR="no"
 COMPRESSOR="gzip" # The compressor is expanded, so you can pass arguments to it like `xz -z -9`
 SKIP_CHECKS="no"
+LIB_PREFIX="/usr/lib"
 
 help="
 usage: initrdbo [[ARGS]] [INITRAMFS_OUT]

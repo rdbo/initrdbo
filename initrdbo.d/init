@@ -23,6 +23,7 @@ mount_pseudo_filesystems() {
 	mount -t devpts none /dev/pts
 	mount -t proc none /proc
 	mount -t sysfs none /sys
+	mount -t tmpfs none /tmp
 }
 
 set_variable_if_expected() {
@@ -130,10 +131,11 @@ setup_new_root() {
 		mount -r -R /media/root /new_root
 	fi
 
-	mkdir -p /new_root/dev /new_root/proc /new_root/sys
+	mkdir -p /new_root/dev /new_root/proc /new_root/sys /new_root/tmp
 	mount -t devtmpfs none /new_root/dev
 	mount -t proc none /new_root/proc
 	mount -t sysfs none /new_root/sys
+	mount -t tmpfs none /new_root/tmp
 }
 
 echo "[*] Mounting pseudo filesystems..."
