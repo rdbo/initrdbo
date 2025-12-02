@@ -16,6 +16,13 @@ echo "$header"
 
 dmesg -n 1
 
+exec 3>&1 4>&2 # Store original stdout and stderr
+
+exec_troubleshoot_shell() {
+	exec 1>&3 2>&4 # Revert log redirection
+	exec /bin/sh
+}
+
 mount_pseudo_filesystems() {
 	mkdir -p /dev /proc /sys
 	mount -t devtmpfs none /dev
@@ -26,9 +33,14 @@ mount_pseudo_filesystems() {
 	mount -t tmpfs none /tmp
 }
 
+redirect_output() {
+	local log_file="$1"
+	exec > "$log_file" 2>&1
+}
+
 set_variable_if_expected() {
 	local option="$1"
-	local expected_vars="init root rootfstype rd.init rd.live modules"
+	local expected_vars="init root rootfstype rd.init rd.live rd.persist_log modules"
 	for expected_var in $expected_vars; do
 		var_name="$(printf "$expected_var" | tr '.' '_')"
 		
@@ -155,23 +167,28 @@ probe_kernel_modules
 
 if [ -z "$_root" ]; then
 	echo "[!] Missing 'root' option in kernel command line, spawning troubleshoot shell..."
-	exec /bin/sh
+	exec_troubleshoot_shell
 fi
 
 if [ -z "$_rootfstype" ]; then
 	echo "[!] Missing 'rootfstype' option in kernel command line, spawning troubleshoot shell..."
-	exec /bin/sh
+	exec_troubleshoot_shell
 fi
 
 echo "[*] Mounting rootfs..."
 if ! mount_rootfs; then
 	echo "[!] Failed to mount the rootfs, spawning troubleshoot shell..."
-	exec /bin/sh
+	exec_troubleshoot_shell
+fi
+
+if [ ! -z "$_rd_persist_log" ]; then
+	mkdir -p "/media/root/var/log/"
+	redirect_output "/media/root/var/log/initrdbo.log"
 fi
 
 # Run custom init if "rd.init=" option is set
 # (relative to /media/root)
-if [ ! -z "$_init" ]; then
+if [ ! -z "$_rd_init" ]; then
 	echo "[*] Running custom init command: $_init"
 	exec chroot /media/root $_init
 fi
@@ -182,7 +199,7 @@ if [ ! -z "$_rd_live" ]; then
 
 	if [ ! -f "/media/root/${_rd_live}" ]; then
 		echo "[!] Missing liveboot rootfs, spawning troubleshoot shell..."
-		exec /bin/sh
+		exec_troubleshoot_shell
 	fi
 	
 	setup_liveboot
