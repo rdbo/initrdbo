@@ -1,3 +1,4 @@
 /bin/busybox
 /sbin/cryptsetup
 /bin/mount
+/bin/bash

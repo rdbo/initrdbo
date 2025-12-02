@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 header="
   _      _ _          _ _         
@@ -16,10 +16,14 @@ echo "$header"
 
 dmesg -n 1
 
-exec 3>&1 4>&2 # Store original stdout and stderr
+setup_logging() {
+	local log_file="$1"
+
+	exec > >(tee -a "$log_file")
+	exec 2> >(tee -a "$log_file" 1>&2)
+}
 
 exec_troubleshoot_shell() {
-	exec 1>&3 2>&4 # Revert log redirection
 	exec /bin/sh
 }
 
@@ -31,11 +35,6 @@ mount_pseudo_filesystems() {
 	mount -t proc none /proc
 	mount -t sysfs none /sys
 	mount -t tmpfs none /tmp
-}
-
-redirect_output() {
-	local log_file="$1"
-	exec > "$log_file" 2>&1
 }
 
 set_variable_if_expected() {
@@ -150,6 +149,10 @@ setup_new_root() {
 	mount -t tmpfs none /new_root/tmp
 }
 
+echo "[*] Setting up early logging..."
+mkdir -p "/var/log"
+setup_logging "/var/log/initrdbo.log"
+
 echo "[*] Mounting pseudo filesystems..."
 mount_pseudo_filesystems
 
@@ -183,7 +186,8 @@ fi
 
 if [ ! -z "$_rd_persist_log" ]; then
 	mkdir -p "/media/root/var/log/"
-	redirect_output "/media/root/var/log/initrdbo.log"
+	cp "/var/log/initrdbo.log" "/media/root/var/log/initrdbo.log"
+	setup_logging "/media/root/var/log/initrdbo.log"
 fi
 
 # Run custom init if "rd.init=" option is set
