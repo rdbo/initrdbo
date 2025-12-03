@@ -158,6 +158,8 @@ setup_logging "/var/log/initrdbo.log"
 echo "[*] Mounting pseudo filesystems..."
 mount_pseudo_filesystems
 
+echo "$header" >> /dev/kmsg
+
 echo "[*] Parsing kernel cmdline options..."
 parse_kernel_cmdline_options
 
