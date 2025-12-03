@@ -158,7 +158,6 @@ mount_pseudo_filesystems
 
 echo "[*] Upgrading logging to /dev/kmsg..."
 echo "$header" > /dev/kmsg
-date +"%Y:%m:%d %H:%M:%S" > /dev/kmsg
 setup_logging "/var/log/initrdbo.log" "/dev/kmsg"
 
 echo "[*] Parsing kernel cmdline options..."
