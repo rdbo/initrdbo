@@ -17,10 +17,8 @@ echo "$header"
 dmesg -n 1
 
 setup_logging() {
-	local log_file="$1"
-
-	exec > >(tee -a "$log_file")
-	exec 2> >(tee -a "$log_file" 1>&2)
+	exec > >(tee -a $@)
+	exec 2> >(tee -a $@ 1>&2)
 }
 
 exec_troubleshoot_shell() {
@@ -158,7 +156,10 @@ setup_logging "/var/log/initrdbo.log"
 echo "[*] Mounting pseudo filesystems..."
 mount_pseudo_filesystems
 
-echo "$header" >> /dev/kmsg
+echo "[*] Upgrading logging to /dev/kmsg..."
+echo "$header" > /dev/kmsg
+date +"%Y:%m:%d %H:%M:%S" > /dev/kmsg
+setup_logging "/var/log/initrdbo.log" "/dev/kmsg"
 
 echo "[*] Parsing kernel cmdline options..."
 parse_kernel_cmdline_options
@@ -191,7 +192,7 @@ fi
 if [ ! -z "$_rd_persist_log" ]; then
 	mkdir -p "/media/root/var/log/"
 	cp "/var/log/initrdbo.log" "/media/root/var/log/initrdbo.log"
-	setup_logging "/media/root/var/log/initrdbo.log"
+	setup_logging "/media/root/var/log/initrdbo.log" "/dev/kmsg"
 fi
 
 # Run custom init if "rd.init=" option is set
