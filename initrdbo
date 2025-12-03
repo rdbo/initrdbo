@@ -168,13 +168,13 @@ copy_files() {
 	for file in $(lddtree -R "$root_dir" -l $files); do
 		if [ -d "$root_dir/$file" ]; then
 			mkdir -p "$initrd_dir/$file"
-			cp -r "$root_dir/$file/." "$initrd_dir/$file/."
+			cp -r -L "$root_dir/$file/." "$initrd_dir/$file/."
 		else
 			local directory="$(printf $file | awk -F '/' '{ $NF=""; print $0 }' | tr ' ' '/')"
 			local file="$(printf "$file" | sed "s|.*/||g")"
 
 			mkdir -p "$initrd_dir/$directory"
-			cp -r "$root_dir/$directory/$file" "$initrd_dir/$directory/$file"
+			cp -r -L "$root_dir/$directory/$file" "$initrd_dir/$directory/$file"
 		fi
 	done
 }
