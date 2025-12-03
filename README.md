@@ -1,6 +1,8 @@
 # initrdbo
 **i**nit**rd** **b**uild **o**perator - A simple initramfs generator
 
+(yes, it is a backronym)
+
 ## Features
 - Sane defaults
 - Configurable
