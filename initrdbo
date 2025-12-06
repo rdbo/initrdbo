@@ -107,7 +107,7 @@ copy_kernel_modules() {
 	local kernel_release="$4"
 	
 	# Copy Linux kernel modules by file match
-	local kmods=$(cat "$modules_file" | grep ^kernel/ | tr '\n' ' ' | xargs -0 printf "%s\n")
+	local kmods=$(cat "$modules_file" | grep ^kernel/ | tr '\n' ' ' | xargs -r -0 -- printf "%s\n")
 	for match in $kmods; do
 		match_path="$root_dir/lib/modules/$kernel_release/"$match
 		if [ ! -e "$match_path" ]; then
@@ -150,7 +150,7 @@ copy_firmware() {
 	local kernel_release="$3"
 
 	mkdir -p "$initrd_dir/lib/firmware"
-	find "$initrd_dir"/lib/modules -type f -name "*.ko*" | chroot_if_differs xargs modinfo -k "$kernel_release" -F firmware | sort -u | while read fw; do
+	find "$initrd_dir"/lib/modules -type f -name "*.ko*" | chroot_if_differs xargs -r -- modinfo -k "$kernel_release" -F firmware | sort -u | while read fw; do
 		for fname in "$fw" "$fw.zst" "$fw.xz"; do
 			if [ -e "${root_dir}/lib/firmware/$fname" ]; then
 				install -pD "${root_dir}/lib/firmware/$fname" "$initrd_dir"/lib/firmware/$fname
