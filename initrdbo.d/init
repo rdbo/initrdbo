@@ -30,7 +30,7 @@ exec_troubleshoot_shell() {
 }
 
 mount_pseudo_filesystems() {
-	mkdir -p /dev /proc /sys
+	mkdir -p /dev /proc /sys /tmp
 	mount -t devtmpfs none /dev
 	mkdir -p /dev/pts
 	mount -t devpts none /dev/pts
