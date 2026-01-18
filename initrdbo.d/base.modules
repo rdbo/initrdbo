@@ -1,3 +1,5 @@
+# NOTE: Modules in /etc/modules will automatically be included
+
 # Device Drivers
 loop
 
@@ -19,7 +21,3 @@ kernel/crypto
 kernel/lib
 kernel/security
 kernel/drivers/ata
-
-# Alpine Linux's `/etc/modules`
-af_packet
-ipv6

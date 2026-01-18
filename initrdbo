@@ -217,6 +217,10 @@ for file in $(ls "$CONFIG_DIR" | grep '.modules$'); do
 	copy_kernel_modules "$tmpdir" "$CONFIG_DIR/$file" "$ROOT_DIR" "$KERNEL_RELEASE"
 done
 
+if [ -f "$MODULES_FILE" ]; then
+	copy_kernel_modules "$tmpdir" "$MODULES_FILE" "$ROOT_DIR" "$KERNEL_RELEASE"
+fi
+
 echo "[*] Copying required firmware to initrd dir..."
 copy_firmware "$tmpdir" "$ROOT_DIR" "$KERNEL_RELEASE"
 
