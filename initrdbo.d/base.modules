@@ -18,7 +18,7 @@ kernel/arch
 kernel/crypto
 kernel/lib
 kernel/security
-kernel/ata
+kernel/drivers/ata
 
 # Alpine Linux's `/etc/modules`
 af_packet
