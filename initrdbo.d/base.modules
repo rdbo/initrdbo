@@ -21,3 +21,4 @@ kernel/crypto
 kernel/lib
 kernel/security
 kernel/drivers/ata
+kernel/drivers/nvme
