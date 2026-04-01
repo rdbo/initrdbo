@@ -1,5 +1,19 @@
 # NOTE: Modules in /etc/modules will automatically be included
 
+# Human Interface Devices
+kernel/drivers/hid
+
+# Storage
+kernel/drivers/ata
+kernel/drivers/nvme
+kernel/drivers/scsi
+usb_storage
+xhci_pci
+ehci_pci
+uhci_hcd
+usb_common
+uas
+
 # Device Drivers
 loop
 
@@ -20,6 +34,3 @@ kernel/arch
 kernel/crypto
 kernel/lib
 kernel/security
-kernel/drivers/ata
-kernel/drivers/nvme
-kernel/drivers/scsi

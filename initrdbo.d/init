@@ -161,14 +161,14 @@ echo "$header" > /dev/kmsg
 log "[*] Parsing kernel cmdline options..."
 parse_kernel_cmdline_options
 
+log "[*] Probing kernel modules..."
+probe_kernel_modules
+
 # Run custom init if "init=" option is set
 if [ ! -z "$_init" ]; then
 	log "[*] Running custom init command: $_init"
 	exec $_init
 fi
-
-log "[*] Probing kernel modules..."
-probe_kernel_modules
 
 if [ -z "$_root" ]; then
 	log "[!] Missing 'root' option in kernel command line, spawning troubleshoot shell..."
