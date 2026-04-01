@@ -7,12 +7,10 @@ kernel/drivers/hid
 kernel/drivers/ata
 kernel/drivers/nvme
 kernel/drivers/scsi
-usb_storage
-xhci_pci
-ehci_pci
-uhci_hcd
-usb_common
-uas
+kernel/drivers/usb/common
+kernel/drivers/usb/core
+kernel/drivers/usb/storage
+kernel/drivers/usb/host
 
 # Device Drivers
 loop
